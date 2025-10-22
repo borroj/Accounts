@@ -1,37 +1,43 @@
+# core/database.py
 import json
-from typing import Any
 from abstracts import Database_
+from table import Table
 
 
 class Database(Database_):
+    """Concrete JSON database where root is a list of tables."""
+
     def __init__(self, path: str):
         super().__init__(path)
-        self.data: dict[str, Any] = {}
         self.load()
+
+    def from_json(self, data: list[dict]) -> None:
+        self.tables.clear()
+
+        for tdata in data:
+            table = Table()
+            table.from_json(tdata)
+            self.add_table(table)
+
+        # optional global info
+        self.parameters["table_count"] = len(self.tables)
+
+    def to_json(self) -> list[dict]:
+        return [t.to_json() for t in self.tables.values()]
 
     def load(self) -> None:
         try:
             with open(self.path, "r", encoding="utf-8") as f:
-                self.data = json.load(f)
+                data = json.load(f)
+                if isinstance(data, list):
+                    self.from_json(data)
+                else:
+                    raise ValueError("Invalid JSON format: expected list at root")
         except FileNotFoundError:
-            self.data = {}
+            self.tables = {}
+            self.parameters = {}
 
     def save(self) -> None:
+        data = self.to_json()
         with open(self.path, "w", encoding="utf-8") as f:
-            json.dump(self.data, f, indent=2, ensure_ascii=False)
-
-    def get(self, key: str, default: Any = None) -> Any:
-        return self.data.get(key, default)
-
-    def set(self, key: str, value: Any) -> None:
-        self.data[key] = value
-        self.save()
-
-    def delete(self, key: str) -> None:
-        if key in self.data:
-            del self.data[key]
-            self.save()
-
-    def clear(self) -> None:
-        self.data.clear()
-        self.save()
+            json.dump(data, f, indent=2, ensure_ascii=False)
