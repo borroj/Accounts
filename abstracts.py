@@ -52,3 +52,34 @@ class Database_(ABC):
 
     def __repr__(self) -> str:
         return f"{self.__class__.__name__}(path='{self.path}')"
+
+
+
+class Table_(ABC):
+    """Abstract representation of a database table."""
+
+    def __init__(self, name: str):
+        self.name = name
+
+    @abstractmethod
+    def from_json(self, data: Any) -> None:
+        """Populate table from a JSON structure."""
+        pass
+
+    @abstractmethod
+    def to_json(self) -> Any:
+        """Return table content as JSON-serializable structure."""
+        pass
+
+    @abstractmethod
+    def insert(self, record: dict[str, Any]) -> None:
+        """Insert a record into the table."""
+        pass
+
+    @abstractmethod
+    def all(self) -> list[dict[str, Any]]:
+        """Return all records."""
+        pass
+
+    def __repr__(self) -> str:
+        return f"{self.__class__.__name__}(name='{self.name}')"
